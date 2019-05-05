@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.splotycode.mosaik.spigot</groupId>
+    <artifactId>Spigot</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0</version>
+    <modules>
+        <module>Base</module>
+        <module>Annotations</module>
+        <module>All</module>
+    </modules>
+
+    <properties>
+        <!-- Setting Encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Setting Java Version -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <mosaik.lombok.version>1.16.20</mosaik.lombok.version>
+
+        <mosaik.plugin.jar>2.4</mosaik.plugin.jar>
+        <mosaik.plugin.compile>3.8.0</mosaik.plugin.compile>
+        <mosaik.plugin.assembly>3.1.1</mosaik.plugin.assembly>
+        <mosaik.plugin.gpg>1.5</mosaik.plugin.gpg>
+        <mosaik.plugin.nexus-staging>1.6.7</mosaik.plugin.nexus-staging>
+        <mosaik.plugin.source>2.2.1</mosaik.plugin.source>
+        <mosaik.plugin.javadoc>3.0.1</mosaik.plugin.javadoc>
+    </properties>
+
+    <name>Mosaik-Spigot</name>
+    <description>Spigot Addon for Mosaik</description>
+    <url>https://github.com/SplotyCode/Mosaik-Spigot</url>
+    <licenses>
+        <license>
+            <name>Eclipse Public License 2.0</name>
+            <url>https://www.eclipse.org/legal/epl-2.0/</url>
+            <distribution>REPO</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>SplotyCode</id>
+            <name>David</name>
+            <email>davidscandurra@gmail.com</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/SplotyCode/Mosaik-Spigot.git</connection>
+        <developerConnection>scm:git:git://github.com/C/SplotyCode/Mosaik-Spigot.git</developerConnection>
+        <url>https://github.com/SplotyCode/Mosaik-Spigot</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <repositories>
+        <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!--Spigot API-->
+        <dependency>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.8-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.splotycode.mosaik</groupId>
+            <artifactId>Util</artifactId>
+            <version>2.2.10-Dev</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.splotycode.mosaik</groupId>
+            <artifactId>Runtime</artifactId>
+            <version>2.2.10-Dev</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${mosaik.lombok.version}</version>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <!-- Activate using the release property: mvn clean install -Prelease -->
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>release</name>
+                </property>
+            </activation>
+
+            <build>
+                <plugins>
+                    <!-- To release to Maven central -->
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>${mosaik.plugin.nexus-staging}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <!-- To generate javadoc -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${mosaik.plugin.source}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${mosaik.plugin.javadoc}</version>
+                        <configuration>
+                            <failOnError>false</failOnError>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${mosaik.plugin.gpg}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+
+</project>
