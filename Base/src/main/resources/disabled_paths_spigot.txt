@@ -1,0 +1,9 @@
+org.bukkit
+org.spigotmc
+net.md_5
+com.mojang
+net.minecraft
+org.fusesource
+org.sqlite
+gnu.trove
+org.yaml
