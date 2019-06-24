@@ -78,11 +78,19 @@
             <groupId>io.github.splotycode.mosaik</groupId>
             <artifactId>Util</artifactId>
             <version>2.2.10-Dev</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.github.splotycode.mosaik</groupId>
             <artifactId>Runtime</artifactId>
             <version>2.2.10-Dev</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.splotycode.mosaik</groupId>
+            <artifactId>ValueTransformer</artifactId>
+            <version>2.2.10-Dev</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

@@ -45,11 +45,13 @@ public class YamlProcessor extends AbstractProcessor {
                     writer.append("# plugin.yml generated with Mosaik\n");
                     GenerateYaml annotation = mainTypeElement.getAnnotation(GenerateYaml.class);
                     String main = String.valueOf(pEnvironment.getElementUtils().getBinaryName(mainTypeElement));
+                    writer.append("# actual main: ").append(main).append("\n");
                     processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Building plugin.yml for " + main);
-                    writer.append("main: ").append(main).append("\n");
+                    writer.append("main: ").append("io.github.splotycode.mosaik.spigot.SpigotPlugin").append("\n");
                     writer.append("name: ").append(annotation.name()).append("\n");
                     writer.append("version: ").append(String.valueOf(annotation.version())).append("\n");
                     writer.append("author: ").append(annotation.author()).append("\n");
+                    writer.append("load: startup\n");
                     writer.append("depend: ").append(StringUtil.join(annotation.dependencies(), obj -> " + obj + ", ", ")).append("\n");
                     writer.append("softdepend: ").append(StringUtil.join(annotation.softDependencies(), obj -> " + obj + ", ", ")).append("\n");
                 }
