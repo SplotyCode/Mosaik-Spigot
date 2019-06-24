@@ -15,7 +15,7 @@ public @interface GenerateYaml {
 
     String author();
 
-    String[] dependencies() default {};
+    String[] dependencies() default {"ProtocolLib"};
     String[] softDependencies() default {};
 
 }
