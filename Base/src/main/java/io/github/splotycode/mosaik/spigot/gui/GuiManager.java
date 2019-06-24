@@ -31,7 +31,9 @@ public class GuiManager {
             player.sendMessage(ChatColor.RED + "Du darfst dieses Inventar nicht öfffnen");
             return;
         }
-        player.playSound(player.getLocation(), Sound.LEVEL_UP, 3, 2);
+        if (inventory.getSound() != null) {
+            player.playSound(player.getLocation(), inventory.getSound(), 3, 0);
+        }
         player.openInventory(inventory.getInventory());
     }
 

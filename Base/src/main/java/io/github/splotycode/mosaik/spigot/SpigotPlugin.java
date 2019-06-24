@@ -6,19 +6,30 @@ import io.github.splotycode.mosaik.runtime.startup.StartUpInvoke;
 import io.github.splotycode.mosaik.spigot.exception.PluginLoadException;
 import io.github.splotycode.mosaik.spigot.gui.GuiListener;
 import io.github.splotycode.mosaik.spigot.link.SpigotLinks;
+import io.github.splotycode.mosaik.spigot.startup.SpigotClassLoaderProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SpigotPlugin extends JavaPlugin {
 
     private static boolean firstPlugin = true;
 
+    private static Map<String, SpigotPlugin> instances = new HashMap<>();
+
+    public static SpigotPlugin getInstance(String name) {
+        return instances.get(name);
+    }
+
     @Override
     public void onEnable() {
-        StartUpInvoke.inokeIfNotInitialised();
+        instances.put(getName(), this);
+        SpigotClassLoaderProvider.setClassLoader(getClassLoader());
+        StartUpInvoke.inokeIfNotInitialised("-cl", "io.github.splotycode.mosaik.spigot.startup.SpigotClassLoaderProvider");
         if (firstPlugin) {
             firstPlugin = false;
             firstPluginLoad();
@@ -26,7 +37,7 @@ public class SpigotPlugin extends JavaPlugin {
 
         Application rawApplication = LinkBase.getApplicationManager().getApplicationByName(getName());
         if (rawApplication == null) throw new PluginLoadException("Could not find Application with name " + getName());
-        if (rawApplication instanceof SpigotApplicationType) throw new PluginLoadException("Application '" + getName() + "' must implements SpigotPluginApplicationType");
+        if (!(rawApplication instanceof SpigotApplicationType)) throw new PluginLoadException("Application '" + getName() + "' must implements SpigotPluginApplicationType");
 
         SpigotApplicationType application = (SpigotApplicationType) rawApplication;
         application.getDataFactory().putData(SpigotApplicationType.PLUGIN, this);

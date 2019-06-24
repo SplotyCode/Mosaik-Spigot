@@ -1,0 +1,19 @@
+core.prefix: §bMosaik §6
+core.defcommand.reload.stopping: Simuliere Plugin stop...
+core.defcommand.reload.stopped: Plugin gestoppt
+core.defcommand.reload.config: Configurise Plugin
+core.defcommand.reload.starting: Starting Plugin
+core.defcommand.reload.finished: Reloaded Plugin Successfully
+core.defcommand.message.reload: Reloadeding I18N
+core.defcommand.message.stash: Stached message file and reloading...
+core.defcommand.message.stashsilent: Stached message file
+core.defcommand.help: Du kannst dolle command hier eingeben bidde: {0}
+core.defcommand.nohelp: Dafür kriegst du keine hilfe
+core.access_denied: §cDu hast keine Rechte dafür
+core.access_debug: §cDu brauchst die Permission {0}
+core.command.error: §cError occurred while processing you command
+core.command.nodebug: §cDu darfst keine detarlierten Details erhalten! Bitte Melde diesen vorfall
+core.command.notab: §cTab complete not supported
+core.command.usage: §cFalsche Benutzung! Richtige Benutzung:%line%{0}
+core.command.nopara: §cDer zwingenden Parameter nummer {0} konnte nicht gefunden werden
+core.command.notranslation_transform: Fehler beim interpretieren: {0}

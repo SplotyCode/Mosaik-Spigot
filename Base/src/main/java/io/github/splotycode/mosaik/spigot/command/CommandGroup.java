@@ -1,10 +1,10 @@
 package io.github.splotycode.mosaik.spigot.command;
 
 import io.github.splotycode.mosaik.spigot.SpigotApplicationType;
-import io.github.splotycode.mosaik.spigot.command.command.ICommand;
 import io.github.splotycode.mosaik.util.ExceptionUtil;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.PluginCommand;
@@ -12,6 +12,8 @@ import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class CommandGroup {
@@ -26,15 +28,19 @@ public class CommandGroup {
         }
     }
 
-    public SpigotApplicationType getApplication() {
+    public Head getHead() {
         CommandGroup current = this;
         while (current.parent != null) {
             current = current.parent;
         }
         if (current instanceof Head) {
-            return ((Head) current).application;
+            return (Head) current;
         }
         throw new IllegalStateException("Head is not instanceof tail");
+    }
+
+    public SpigotApplicationType getApplication() {
+        return getHead().application;
     }
 
     protected CommandGroup(String name) {
@@ -45,7 +51,7 @@ public class CommandGroup {
 
     @Getter @Setter private CommandGroup parent;
 
-    @Getter private ICommand command;
+    @Getter private CommandContext command;
 
     @Getter private HashMap<String, CommandGroup> childs = new HashMap<>();
 
@@ -62,33 +68,47 @@ public class CommandGroup {
         return group;
     }
 
-    public void register(ICommand command) {
+    public void register(CommandContext command, boolean createListener) {
         this.command = command;
         SpigotApplicationType application = getApplication();
 
-        try {
-            PluginCommand cmd = createCommand(command, application);
+        if (createListener) {
+            try {
+                PluginCommand cmd = createCommand(command, application);
 
-            Field map = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-            map.setAccessible(true);
-            CommandMap commandMap = (CommandMap) map.get(Bukkit.getServer());
-            commandMap.register(name, cmd);
-        } catch (ReflectiveOperationException e) {
-            ExceptionUtil.throwRuntime(e);
+                Field map = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+                map.setAccessible(true);
+                CommandMap commandMap = (CommandMap) map.get(Bukkit.getServer());
+                commandMap.register(application.spigotName(), cmd);
+            } catch (ReflectiveOperationException e) {
+                ExceptionUtil.throwRuntime(e);
+            }
         }
     }
 
-    private PluginCommand createCommand(ICommand command, SpigotApplicationType application) throws ReflectiveOperationException {
+    private PluginCommand createCommand(CommandContext command, SpigotApplicationType application) throws ReflectiveOperationException {
         Constructor<PluginCommand> c = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
         c.setAccessible(true);
 
         PluginCommand cmd = c.newInstance(name, application.getPlugin());
-        cmd.setAliases(command.aliases());
-        cmd.setUsage(command.usage());
-        cmd.setDescription(command.desciption());
+
+        ArrayList<String> aliases = new ArrayList<>(Collections.singletonList(getHead().getName()));
+        aliases.addAll(command.getData().getAliases());
+
+        cmd.setAliases(aliases);
+        cmd.setUsage(command.getData().getUsage());
+        cmd.setDescription(command.getData().getDescription());
         cmd.setExecutor(application.getData(SpigotApplicationType.COMMAND_REDIRECT));
         cmd.setTabCompleter(application.getData(SpigotApplicationType.COMMAND_REDIRECT));
         return cmd;
     }
 
+    @Override
+    public String toString() {
+        return "CommandGroup{" +
+                "name='" + name + '\'' +
+                ", command=" + command +
+                ", childs=" + childs +
+                '}';
+    }
 }
