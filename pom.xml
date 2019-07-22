@@ -12,6 +12,7 @@
         <module>Base</module>
         <module>Annotations</module>
         <module>All</module>
+        <module>NMS</module>
     </modules>
 
     <properties>
