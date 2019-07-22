@@ -9,6 +9,7 @@ import io.github.splotycode.mosaik.spigot.command.CommandRedirect;
 import io.github.splotycode.mosaik.spigot.command.CommandRegistration;
 import io.github.splotycode.mosaik.spigot.gui.GuiManager;
 import io.github.splotycode.mosaik.spigot.locale.SpigotLocale;
+import io.github.splotycode.mosaik.spigot.storage.YamlFile;
 import io.github.splotycode.mosaik.util.datafactory.DataKey;
 import io.github.splotycode.mosaik.util.i18n.I18N;
 import io.github.splotycode.mosaik.util.io.FileUtil;
@@ -24,10 +25,11 @@ public interface SpigotApplicationType extends ApplicationType {
     DataKey<String> PREFIX = new DataKey<>("spigot.prefix");
 
     DataKey<CommandGroup> COMMAND_HEAD = new DataKey<>("spigot.command_head");
-    DataKey<CommandRedirect> COMMAND_REDIRECT = new DataKey<>("spigot.redirect");
+    DataKey<CommandRedirect> COMMAND_REDIRECT = new DataKey<>("spigot.command_redirect");
     DataKey<CommandRegistration> COMMAND_REGISTRATION = new DataKey<>("spigot.command_reg");
 
     DataKey<I18N> I18N = new DataKey<>("spigot.i18n");
+    DataKey<YamlFile> CONFIG = new DataKey<>("spigot.config");
 
     GuiManager GUI_MANAGER = new GuiManager();
 
@@ -46,19 +48,47 @@ public interface SpigotApplicationType extends ApplicationType {
         putData(COMMAND_REDIRECT, new CommandRedirect(this));
         putData(COMMAND_REGISTRATION, new CommandRegistration(this));
 
-        FileUtil.writeToFile(getDefaultMessageFile(), IOUtil.resourceToText("message.txt"));
-        useLangeageFile("message.txt");
+        resourceToFile("message.txt");
+        useLanguageFile("message.txt");
 
         putData(SpigotApplicationType.PLUGIN, SpigotPlugin.getInstance(getName()));
 
         getLocalShutdownManager().addShutdownTask(() -> HandlerList.unregisterAll(getPlugin()));
     }
 
-    default File getDefaultMessageFile() {
-        return new File(LinkBase.getInstance().getLink(Links.PATH_MANAGER).getMainDirectory(), "message.txt");
+    default void resourceToFile(String name) {
+        File file = getFile(name);
+        if (!file.exists()) {
+            FileUtil.writeToFile(file, IOUtil.resourceToText(name));
+        }
     }
 
-    default void useLangeageFile(String name) {
+    default File getFile(String name) {
+        return new File(LinkBase.getInstance().getLink(Links.PATH_MANAGER).getMainDirectory(), name);
+    }
+
+    default void loadResourceConfig() {
+        loadResourceConfig("config.yml");
+    }
+
+    default void loadResourceConfig(String name) {
+        resourceToFile(name);
+        loadConfig(name);
+    }
+
+    default void loadConfig() {
+        loadConfig("config.yml");
+    }
+
+    default void loadConfig(String name) {
+        putData(CONFIG, new YamlFile(getFile(name)));
+    }
+
+    default File getDefaultMessageFile() {
+        return getFile("message.txt");
+    }
+
+    default void useLanguageFile(String name) {
         File file = new File(LinkBase.getInstance().getLink(Links.PATH_MANAGER).getMainDirectory(), name);
         putData(I18N, new I18N().setLocale(new SpigotLocale(file)));
     }
@@ -85,6 +115,10 @@ public interface SpigotApplicationType extends ApplicationType {
 
     default CommandRegistration getRegistraction() {
         return getData(COMMAND_REGISTRATION);
+    }
+
+    default YamlFile getConfiguration() {
+        return getData(CONFIG);
     }
 
     default I18N getI18N() {

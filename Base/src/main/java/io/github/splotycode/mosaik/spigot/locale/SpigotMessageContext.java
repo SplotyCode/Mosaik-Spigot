@@ -1,14 +1,16 @@
 package io.github.splotycode.mosaik.spigot.locale;
 
-import io.github.splotycode.mosaik.spigot.exception.CommandExcpetion;
+import io.github.splotycode.mosaik.spigot.exception.CommandException;
 import io.github.splotycode.mosaik.spigot.permission.Permissions;
 import io.github.splotycode.mosaik.util.StringUtil;
 import io.github.splotycode.mosaik.util.i18n.I18N;
 import io.github.splotycode.mosaik.util.i18n.MessageContext;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.command.CommandSender;
+
+import java.util.Collection;
+import java.util.function.Function;
 
 public class SpigotMessageContext extends MessageContext {
 
@@ -38,6 +40,22 @@ public class SpigotMessageContext extends MessageContext {
         if (!reuse) throw new IllegalStateException("Reusing without reuse flag");
         this.sender = sender;
         replacements.clear();
+    }
+
+    public <T> void printList(String nameKey, String mainKey, Collection<T> list, Function<T, Object[]> parameters) {
+        printList(sender, nameKey, mainKey, list, parameters);
+    }
+
+    public <T> void printList(CommandSender sender, String nameKey, String mainKey, Collection<T> list, Function<T, Object[]> parameters) {
+        message(sender, "--------[" + nameKey + "]--------");
+        if (list.isEmpty()) {
+            message("core.common.empty");
+        } else {
+            for (T item : list) {
+                message(mainKey, parameters.apply(item));
+            }
+        }
+        message(sender, "--------[" + nameKey + "]--------");
     }
 
     public void message(CommandSender sender, String key, Object... objects) {
@@ -76,6 +94,6 @@ public class SpigotMessageContext extends MessageContext {
 
     @Override
     protected RuntimeException getErrorException(String message) {
-        return new CommandExcpetion(message);
+        return new CommandException(message);
     }
 }

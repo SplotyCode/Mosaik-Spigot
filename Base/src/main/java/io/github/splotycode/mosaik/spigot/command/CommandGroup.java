@@ -12,9 +12,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 public class CommandGroup {
 
@@ -70,6 +68,9 @@ public class CommandGroup {
 
     public void register(CommandContext command, boolean createListener) {
         this.command = command;
+        for (String aliases : command.data().getAliases()) {
+            getParent().childs.put(aliases, this);
+        }
         SpigotApplicationType application = getApplication();
 
         if (createListener) {
@@ -92,7 +93,7 @@ public class CommandGroup {
 
         PluginCommand cmd = c.newInstance(name, application.getPlugin());
 
-        ArrayList<String> aliases = new ArrayList<>(Collections.singletonList(getHead().getName()));
+        List<String> aliases = Collections.singletonList(getHead().getName());
         aliases.addAll(command.getData().getAliases());
 
         cmd.setAliases(aliases);

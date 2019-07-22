@@ -1,22 +1,25 @@
 package io.github.splotycode.mosaik.spigot.command;
 
 import io.github.splotycode.mosaik.spigot.SpigotApplicationType;
-import io.github.splotycode.mosaik.spigot.exception.CommandExcpetion;
+import io.github.splotycode.mosaik.spigot.exception.CommandException;
 import io.github.splotycode.mosaik.spigot.locale.SpigotMessageContext;
 import io.github.splotycode.mosaik.spigot.permission.Permissions;
 import io.github.splotycode.mosaik.util.ExceptionUtil;
-import io.github.splotycode.mosaik.util.StringUtil;
 import io.github.splotycode.mosaik.util.datafactory.DataFactory;
 import io.github.splotycode.mosaik.util.datafactory.DataKey;
 import io.github.splotycode.mosaik.valuetransformer.TransformException;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.HumanEntity;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CommandRedirect implements CommandExecutor, TabCompleter {
 
@@ -54,13 +57,19 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         CommandGroup group = application.getGroup(appendArgs(label, args));
         CommandContext command = group.getCommand();
-        if (command == null) return false;
+        prepareMessageContext(sender, null);
+        if (command == null) {
+            messageContext.message("core.command.notab");
+            return true;
+        }
+
+        messageContext.setUsage(command.data().getUsage());
 
         DataFactory additionally = new DataFactory();
         additionally.putData(SENDER, sender);
         additionally.putData(ARGS, args);
 
-        prepareMessageContext(sender, command.getData().getUsage());
+
         messageContext.addReplacement("%executor%", sender.getName());
         for (int i = 0; i < args.length; i++) {
             messageContext.addReplacement("%arg" + i + "%", args[i]);
@@ -71,23 +80,12 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
         try {
             command.callmethod(additionally);
         } catch (Throwable ex) {
-            CommandExcpetion cmdEx = ExceptionUtil.getInstanceOfCause(ex, CommandExcpetion.class);
-            TransformException transformException = ExceptionUtil.getInstanceOfCause(ex, TransformException.class);
-            if (cmdEx != null) {
-                messageContext.messageRaw(cmdEx.getMessage());
-                return true;
+            RuntimeException userException = ExceptionUtil.getInstanceOfCause(ex, CommandException.class);
+            if (userException == null) {
+                userException = ExceptionUtil.getInstanceOfCause(ex, TransformException.class);
             }
-            if (transformException != null) {
-                TransformException raw = (TransformException) transformException.getCause();
-                String transformKey = "transforms." + raw.getStackTrace()[0].getClassName();
-                if (messageContext.hasTranslation(transformKey)) {
-                    messageContext.message(transformKey);
-                } else {
-                    if (sender.hasPermission(Permissions.DEBUG)) {
-                        messageContext.messageRaw(transformKey);
-                    }
-                    messageContext.message("core.command.notranslation_transform", transformException.getMessage());
-                }
+            if (userException != null) {
+                messageContext.messageRaw(userException.getMessage());
                 return true;
             }
             messageContext.message("core.command.error");
@@ -102,14 +100,27 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
-        CommandGroup group = application.getGroup(appendArgs(label, args));
+        CommandGroup group = application.getGroup(args);
         CommandContext command = group.getCommand();
-        if (command == null) return Collections.emptyList();
-
         prepareMessageContext(sender, null);
-        
-        messageContext.message("core.command.notab");
-        return Collections.emptyList();
+        if (command == null) {
+            messageContext.message("core.command.notfound");
+            return Collections.emptyList();
+        }
+
+        List<String> completions = new ArrayList<>(group.getChilds().keySet());
+
+        String arg = args[args.length - 1].toLowerCase();
+        Class clazz = command.getData().getFields().get(args.length - 2); // For label and to get the index
+
+        if (clazz != null && OfflinePlayer.class.isAssignableFrom(clazz)) {
+            completions.addAll(Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).filter(name -> name.toLowerCase().contains(arg)).collect(Collectors.toList()));
+        }
+
+        if (completions.isEmpty()) {
+            messageContext.message("core.command.notab");
+        }
+        return completions;
     }
 
 }

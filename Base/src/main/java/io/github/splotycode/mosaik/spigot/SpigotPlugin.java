@@ -2,11 +2,12 @@ package io.github.splotycode.mosaik.spigot;
 
 import io.github.splotycode.mosaik.runtime.LinkBase;
 import io.github.splotycode.mosaik.runtime.application.Application;
+import io.github.splotycode.mosaik.runtime.startup.StartUpConfiguration;
 import io.github.splotycode.mosaik.runtime.startup.StartUpInvoke;
 import io.github.splotycode.mosaik.spigot.exception.PluginLoadException;
 import io.github.splotycode.mosaik.spigot.gui.GuiListener;
 import io.github.splotycode.mosaik.spigot.link.SpigotLinks;
-import io.github.splotycode.mosaik.spigot.startup.SpigotClassLoaderProvider;
+import io.github.splotycode.mosaik.util.logger.JavaUtilLoggerFactory;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,8 +29,12 @@ public class SpigotPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         instances.put(getName(), this);
-        SpigotClassLoaderProvider.setClassLoader(getClassLoader());
-        StartUpInvoke.inokeIfNotInitialised("-cl", "io.github.splotycode.mosaik.spigot.startup.SpigotClassLoaderProvider");
+        StartUpInvoke.inokeIfNotInitialised(new StartUpConfiguration()
+                .withClassLoader(this::getClassLoader)
+                .skipClassLoaderCheck()
+                .skipInvokedCheck()
+                .withBootLoggerFactory(JavaUtilLoggerFactory.class)
+                .withRuntimeLoggerFactory(JavaUtilLoggerFactory.class));
         if (firstPlugin) {
             firstPlugin = false;
             firstPluginLoad();

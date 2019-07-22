@@ -1,4 +1,5 @@
 core.prefix: §bMosaik §6
+core.common.empty: Die liste ist leer
 core.defcommand.reload.stopping: Simuliere Plugin stop...
 core.defcommand.reload.stopped: Plugin gestoppt
 core.defcommand.reload.config: Configurise Plugin
@@ -11,6 +12,7 @@ core.defcommand.help: Du kannst dolle command hier eingeben bidde: {0}
 core.defcommand.nohelp: Dafür kriegst du keine hilfe
 core.access_denied: §cDu hast keine Rechte dafür
 core.access_debug: §cDu brauchst die Permission {0}
+core.command.notfound: §cDer Command konnte nicht gefunden werden
 core.command.error: §cError occurred while processing you command
 core.command.nodebug: §cDu darfst keine detarlierten Details erhalten! Bitte Melde diesen vorfall
 core.command.notab: §cTab complete not supported
