@@ -11,6 +11,8 @@ public @interface Arg {
 
     int value();
 
+    String displayName() default "";
+
     boolean required() default true;
 
 }

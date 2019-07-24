@@ -1,9 +1,11 @@
-package io.github.splotycode.mosaik.spigot.command;
+package io.github.splotycode.mosaik.spigot.command.def;
 
 import io.github.splotycode.mosaik.runtime.LinkBase;
 import io.github.splotycode.mosaik.runtime.application.ApplicationHandle;
 import io.github.splotycode.mosaik.spigot.SpigotApplicationType;
+import io.github.splotycode.mosaik.spigot.command.CommandRedirect;
 import io.github.splotycode.mosaik.spigot.command.annotation.Command;
+import io.github.splotycode.mosaik.spigot.command.annotation.Description;
 import io.github.splotycode.mosaik.spigot.locale.SpigotLocale;
 import io.github.splotycode.mosaik.spigot.locale.SpigotMessageContext;
 import io.github.splotycode.mosaik.util.StringUtil;
@@ -18,20 +20,18 @@ public class DefaultPluginCommand {
         application.getRegistraction().register(this);
     }
 
-    @Command("help")
-    void help(SpigotMessageContext ctx) {
-        String usage = ctx.getUsage();
-        if (StringUtil.isEmpty(usage)) {
-            ctx.message("core.defcommand.nohelp");
-        } else {
-            ctx.message("core.defcommand.help", usage);
-        }
-    }
-
     @Command("messages reload")
     void messageReload(SpigotMessageContext ctx) {
         application.getI18N().setLocale(new SpigotLocale(application.getDefaultMessageFile()));
         ctx.message("core.defcommand.message.reload");
+    }
+
+    @Command("help")
+    @Description(aliases = "hilfe")
+    void help(SpigotMessageContext ctx) {
+        ctx.sendHeader("core.defcommand.help");
+        CommandRedirect.printHelp(ctx, application.getCommandHead());
+        ctx.sendHeader("core.defcommand.help");
     }
 
     @Command("messages stash")

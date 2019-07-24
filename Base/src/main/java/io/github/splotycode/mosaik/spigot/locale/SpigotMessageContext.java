@@ -47,15 +47,23 @@ public class SpigotMessageContext extends MessageContext {
     }
 
     public <T> void printList(CommandSender sender, String nameKey, String mainKey, Collection<T> list, Function<T, Object[]> parameters) {
-        message(sender, "--------[" + nameKey + "]--------");
+        sendHeader(sender, nameKey);
         if (list.isEmpty()) {
-            message("core.common.empty");
+            message(sender, "core.common.empty");
         } else {
             for (T item : list) {
                 message(mainKey, parameters.apply(item));
             }
         }
-        message(sender, "--------[" + nameKey + "]--------");
+        sendHeader(sender, nameKey);
+    }
+
+    public void sendHeader(String name) {
+        sendHeader(sender, name);
+    }
+
+    public void sendHeader(CommandSender sender, String name) {
+        messageRaw(sender, "--------[" + translator.get(name) + "]--------");
     }
 
     public void message(CommandSender sender, String key, Object... objects) {

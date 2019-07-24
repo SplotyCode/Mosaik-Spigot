@@ -4,7 +4,6 @@ import io.github.splotycode.mosaik.spigot.SpigotApplicationType;
 import io.github.splotycode.mosaik.util.ExceptionUtil;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.PluginCommand;
@@ -66,12 +65,52 @@ public class CommandGroup {
         return group;
     }
 
+    public String commandString(char separator) {
+        StringBuilder str = new StringBuilder();
+        CommandGroup node = this;
+        while (node != null) {
+            str.insert(0, separator).insert(0, node.name);
+            node = node.parent;
+        }
+        return str.deleteCharAt(0).toString();
+    }
+
+    public String commandAliasString(char separator) {
+        StringBuilder str = new StringBuilder();
+        CommandGroup node = this;
+        while (node != null) {
+            boolean first = true;
+            for (String alias : node.getCommand().data().getAliases()) {
+                if (first) {
+                    first = false;
+                } else {
+                    str.insert(0, '/');
+                }
+                str.insert(0, alias);
+            }
+            str.insert(0, node.name).insert(0, separator);
+            node = node.parent;
+        }
+        return str.deleteCharAt(0).toString();
+    }
+
+    public ArrayList<CommandGroup> realChilds() {
+        ArrayList<CommandGroup> list = new ArrayList<>(Math.round(childs.size() * 0.85F));
+        for (Map.Entry<String, CommandGroup> group : childs.entrySet()) {
+            if (group.getKey().equals(group.getValue().name)) {
+                list.add(group.getValue());
+            }
+        }
+        return list;
+    }
+
     public void register(CommandContext command, boolean createListener) {
         this.command = command;
         for (String aliases : command.data().getAliases()) {
             getParent().childs.put(aliases, this);
         }
         SpigotApplicationType application = getApplication();
+        command.data().buildUsage(this);
 
         if (createListener) {
             try {
@@ -93,11 +132,11 @@ public class CommandGroup {
 
         PluginCommand cmd = c.newInstance(name, application.getPlugin());
 
-        List<String> aliases = Collections.singletonList(getHead().getName());
+        List<String> aliases = Collections.singletonList(getName());
         aliases.addAll(command.getData().getAliases());
 
         cmd.setAliases(aliases);
-        cmd.setUsage(command.getData().getUsage());
+        cmd.setUsage(command.getData().getSimpleUsage());
         cmd.setDescription(command.getData().getDescription());
         cmd.setExecutor(application.getData(SpigotApplicationType.COMMAND_REDIRECT));
         cmd.setTabCompleter(application.getData(SpigotApplicationType.COMMAND_REDIRECT));

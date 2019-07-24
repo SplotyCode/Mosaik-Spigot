@@ -8,8 +8,7 @@ core.defcommand.reload.finished: Reloaded Plugin Successfully
 core.defcommand.message.reload: Reloadeding I18N
 core.defcommand.message.stash: Stached message file and reloading...
 core.defcommand.message.stashsilent: Stached message file
-core.defcommand.help: Du kannst dolle command hier eingeben bidde: {0}
-core.defcommand.nohelp: Dafür kriegst du keine hilfe
+core.defcommand.help: Plugin Hilfe
 core.access_denied: §cDu hast keine Rechte dafür
 core.access_debug: §cDu brauchst die Permission {0}
 core.command.notfound: §cDer Command konnte nicht gefunden werden
@@ -19,3 +18,7 @@ core.command.notab: §cTab complete not supported
 core.command.usage: §cFalsche Benutzung! Richtige Benutzung:%line%{0}
 core.command.nopara: §cDer zwingenden Parameter nummer {0} konnte nicht gefunden werden
 core.command.notranslation_transform: Fehler beim interpretieren: {0}
+core.command.help: Command Hilfe
+core.command.args.unknown: Unbekannt
+core.command.args.player: Player
+core.command.args.online: Online Player

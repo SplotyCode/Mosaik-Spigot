@@ -5,8 +5,10 @@ import io.github.splotycode.mosaik.spigot.exception.CommandException;
 import io.github.splotycode.mosaik.spigot.locale.SpigotMessageContext;
 import io.github.splotycode.mosaik.spigot.permission.Permissions;
 import io.github.splotycode.mosaik.util.ExceptionUtil;
+import io.github.splotycode.mosaik.util.collection.ArrayUtil;
 import io.github.splotycode.mosaik.util.datafactory.DataFactory;
 import io.github.splotycode.mosaik.util.datafactory.DataKey;
+import io.github.splotycode.mosaik.util.i18n.MessageContext;
 import io.github.splotycode.mosaik.valuetransformer.TransformException;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -16,6 +18,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.HumanEntity;
 
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,24 +49,51 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
         messageContext.addReplacement("%line%", "\n");
     }
 
-    private String[] appendArgs(String label, String[] args) {
-        String[] allArgs = new String[args.length + 1];
-        allArgs[0] = label;
-        System.arraycopy(args, 0, allArgs, 1, args.length);
-        return allArgs;
+    private void printHelp(CommandGroup group) {
+        printHelp(messageContext, group);
+    }
+
+    public static void printHelp(SpigotMessageContext ctx, CommandGroup group) {
+        if (group.getCommand() != null) {
+            ctx.messageRaw("/" + group.getCommand().data().getSimpleUsage());
+        }
+        for (CommandGroup child : group.realChilds()) {
+            printHelp(ctx, child);
+        }
+    }
+
+    private boolean isHelp(String last) {
+        return "help".equals(last) || "hilfe".equals(last);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        CommandGroup group = application.getGroup(appendArgs(label, args));
+        boolean help = isHelp(ArrayUtil.last(args));
+        if (help) {
+            args = ArrayUtil.resize(args, args.length - 1);
+        }
+
+        CommandGroup group = application.getGroup(ArrayUtil.prepend(args, label));
+        if (help) {
+            CommandGroup helpGroup = group.getChilds().get("help");
+            if (helpGroup != null) {
+                group = helpGroup;
+            }
+        }
         CommandContext command = group.getCommand();
         prepareMessageContext(sender, null);
+        if (help) {
+            messageContext.sendHeader("core.command.help");
+            printHelp(group);
+            messageContext.sendHeader("core.command.help");
+            return true;
+        }
         if (command == null) {
             messageContext.message("core.command.notab");
             return true;
         }
 
-        messageContext.setUsage(command.data().getUsage());
+        messageContext.setUsage(command.data().getSimpleUsage());
 
         DataFactory additionally = new DataFactory();
         additionally.putData(SENDER, sender);
@@ -111,14 +141,16 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
         List<String> completions = new ArrayList<>(group.getChilds().keySet());
 
         String arg = args[args.length - 1].toLowerCase();
-        Class clazz = command.getData().getFields().get(args.length - 2); // For label and to get the index
+        Parameter parameter = command.getData().getFields().get(args.length - 2); // For label and to get the index
 
-        if (clazz != null && OfflinePlayer.class.isAssignableFrom(clazz)) {
+        if (parameter != null && OfflinePlayer.class.isAssignableFrom(parameter.getType())) {
             completions.addAll(Bukkit.getOnlinePlayers().stream().map(HumanEntity::getName).filter(name -> name.toLowerCase().contains(arg)).collect(Collectors.toList()));
         }
 
         if (completions.isEmpty()) {
             messageContext.message("core.command.notab");
+        } else {
+            completions.add("help");
         }
         return completions;
     }
