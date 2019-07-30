@@ -21,14 +21,29 @@ public class CommandRegistration implements ClassRegister<Object> {
         Command base = clazz.getAnnotation(Command.class);
         if (base != null) {
             String basePath = base.value();
-            boolean sup = !StringUtil.isEmpty(basePath);
+            CommandGroup baseGroup = application.getCommandHead();
+            boolean hasBase = !StringUtil.isEmpty(basePath);
+            if (hasBase) {
+                baseGroup = baseGroup.group(basePath);
+                baseGroup.register(null, true);
+            }
+
             for (Method method : ReflectionUtil.getAllMethods(clazz)) {
                 Command command = method.getAnnotation(Command.class);
                 if (command != null) {
-                    String path = sup ? (basePath + " ") : "" + command.value();
                     CommandContext context = new CommandContext();
                     context.feed(method, obj);
-                    application.getCommandHead().group(path).register(context, !sup);
+                    if (StringUtil.isEmpty(command.value())) {
+                        if (hasBase) {
+                            context.data().setGroup(baseGroup);
+                            baseGroup.setCommand(context);
+                            context.data().buildUsage();
+                        } else throw new IllegalStateException("Need base or sub command string");
+                    } else {
+                        CommandGroup group = baseGroup.group(command.value());
+                        context.data().setGroup(group);
+                        group.register(context, !hasBase);
+                    }
                 }
             }
         }

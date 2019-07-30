@@ -12,12 +12,14 @@ import org.bukkit.command.CommandSender;
 import java.util.Collection;
 import java.util.function.Function;
 
+@Getter
 public class SpigotMessageContext extends MessageContext {
 
-    @Getter @Setter
+    @Setter
     private boolean reuse = true;
     private CommandSender sender;
-    @Setter @Getter private String usage;
+    @Setter private String usage;
+    @Setter private String tranlationPrefix;
 
     public SpigotMessageContext(I18N translator, CommandSender sender) {
         super(translator, "Not set", false);
@@ -64,6 +66,14 @@ public class SpigotMessageContext extends MessageContext {
 
     public void sendHeader(CommandSender sender, String name) {
         messageRaw(sender, "--------[" + translator.get(name) + "]--------");
+    }
+
+    @Override
+    public String translate(String key, Object... objects) {
+        if (key.startsWith(".")) {
+            key = tranlationPrefix + key;
+        }
+        return super.translate(key, objects);
     }
 
     public void message(CommandSender sender, String key, Object... objects) {

@@ -1,14 +1,15 @@
 package io.github.splotycode.mosaik.spigot.command;
 
 import io.github.splotycode.mosaik.spigot.SpigotApplicationType;
+import io.github.splotycode.mosaik.spigot.command.def.MosaikCommand;
 import io.github.splotycode.mosaik.spigot.exception.CommandException;
 import io.github.splotycode.mosaik.spigot.locale.SpigotMessageContext;
 import io.github.splotycode.mosaik.spigot.permission.Permissions;
 import io.github.splotycode.mosaik.util.ExceptionUtil;
+import io.github.splotycode.mosaik.util.StringUtil;
 import io.github.splotycode.mosaik.util.collection.ArrayUtil;
 import io.github.splotycode.mosaik.util.datafactory.DataFactory;
 import io.github.splotycode.mosaik.util.datafactory.DataKey;
-import io.github.splotycode.mosaik.util.i18n.MessageContext;
 import io.github.splotycode.mosaik.valuetransformer.TransformException;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -20,6 +21,7 @@ import org.bukkit.entity.HumanEntity;
 
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,7 +39,7 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
         this.application = application;
     }
     
-    private void prepareMessageContext(CommandSender sender, String usage) {
+    private void prepareMessageContext(CommandSender sender, CommandGroup group, String usage) {
         if (messageContext == null || !messageContext.isReuse()) {
             messageContext = new SpigotMessageContext(application.getI18N(), sender);
         } else {
@@ -47,6 +49,7 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
         messageContext.setPrefix(application.getPrefix());
         messageContext.setAllLinePrefix(true);
         messageContext.addReplacement("%line%", "\n");
+        messageContext.setTranlationPrefix("commands." + group.commandString('.'));
     }
 
     private void printHelp(CommandGroup group) {
@@ -54,8 +57,12 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
     }
 
     public static void printHelp(SpigotMessageContext ctx, CommandGroup group) {
-        if (group.getCommand() != null) {
-            ctx.messageRaw("/" + group.getCommand().data().getSimpleUsage());
+        CommandData data;
+        if (group.getCommand() != null && (data = group.getCommand().data()).hasPermission(ctx.getSender())) {
+            ctx.messageRaw("/" + data.getSimpleUsage());
+            if (!StringUtil.isEmpty(data.getDescription())) {
+                ctx.message(data.getDescription());
+            }
         }
         for (CommandGroup child : group.realChilds()) {
             printHelp(ctx, child);
@@ -81,17 +88,22 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
             }
         }
         CommandContext command = group.getCommand();
-        prepareMessageContext(sender, null);
-        if (help) {
-            messageContext.sendHeader("core.command.help");
-            printHelp(group);
-            messageContext.sendHeader("core.command.help");
-            return true;
-        }
+        prepareMessageContext(sender, group, null);
         if (command == null) {
-            messageContext.message("core.command.notab");
+            messageContext.message("core.command.notfound");
+        }
+        if (help || command == null) {
+            if (group.realChilds().isEmpty() && command == null)  {
+                messageContext.message("core.command.nohelp");
+            } else {
+                messageContext.sendHeader("core.command.help");
+                printHelp(group);
+                messageContext.sendHeader("core.command.help");
+            }
             return true;
         }
+
+        args = Arrays.copyOfRange(args, group.parentSize(), args.length);
 
         messageContext.setUsage(command.data().getSimpleUsage());
 
@@ -113,9 +125,15 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
             RuntimeException userException = ExceptionUtil.getInstanceOfCause(ex, CommandException.class);
             if (userException == null) {
                 userException = ExceptionUtil.getInstanceOfCause(ex, TransformException.class);
+                if (userException != null && userException.getCause() instanceof TransformException) {
+                    userException = (RuntimeException) userException.getCause();
+                }
             }
             if (userException != null) {
                 messageContext.messageRaw(userException.getMessage());
+                if (MosaikCommand.INSTANCE.isDebugging(sender)) {
+                    messageContext.messageRaw(ExceptionUtil.toString(ex));
+                }
                 return true;
             }
             messageContext.message("core.command.error");
@@ -132,7 +150,7 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
         CommandGroup group = application.getGroup(args);
         CommandContext command = group.getCommand();
-        prepareMessageContext(sender, null);
+        prepareMessageContext(sender, group, null);
         if (command == null) {
             messageContext.message("core.command.notfound");
             return Collections.emptyList();

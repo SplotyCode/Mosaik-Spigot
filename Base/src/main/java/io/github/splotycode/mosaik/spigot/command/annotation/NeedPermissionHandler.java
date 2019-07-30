@@ -2,6 +2,7 @@ package io.github.splotycode.mosaik.spigot.command.annotation;
 
 import io.github.splotycode.mosaik.spigot.command.CommandContext;
 import io.github.splotycode.mosaik.spigot.command.CommandData;
+import io.github.splotycode.mosaik.util.StringUtil;
 import io.github.splotycode.mosaik.util.reflection.annotation.method.AnnotationHandler;
 
 public class NeedPermissionHandler implements AnnotationHandler<CommandContext, NeedPermission, CommandData> {
@@ -13,7 +14,16 @@ public class NeedPermissionHandler implements AnnotationHandler<CommandContext, 
 
     @Override
     public void init(CommandContext context, NeedPermission permission, CommandData data) throws Exception {
-        data.setPermission(permission.value());
+        if (StringUtil.isEmpty(permission.value())) {
+            String appName = data.getGroup().getApplication().getName().toLowerCase();
+            String path =  data.getGroup().commandString('.');
+            if (!path.startsWith(appName)) {
+                path = appName + path;
+            }
+            data.setPermission(path);
+        } else {
+            data.setPermission(permission.value());
+        }
     }
 
     @Override

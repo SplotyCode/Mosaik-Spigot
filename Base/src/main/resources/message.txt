@@ -9,6 +9,8 @@ core.defcommand.message.reload: Reloadeding I18N
 core.defcommand.message.stash: Stached message file and reloading...
 core.defcommand.message.stashsilent: Stached message file
 core.defcommand.help: Plugin Hilfe
+core.defcommand.debug.on: Du befindest dich im Debug Modus
+core.defcommand.debug.off: Du befindest dich nun nicht mehr im Debug Modus
 core.access_denied: §cDu hast keine Rechte dafür
 core.access_debug: §cDu brauchst die Permission {0}
 core.command.notfound: §cDer Command konnte nicht gefunden werden
@@ -19,6 +21,13 @@ core.command.usage: §cFalsche Benutzung! Richtige Benutzung:%line%{0}
 core.command.nopara: §cDer zwingenden Parameter nummer {0} konnte nicht gefunden werden
 core.command.notranslation_transform: Fehler beim interpretieren: {0}
 core.command.help: Command Hilfe
+core.command.nohelp: No Help Information for this CommandGroup
 core.command.args.unknown: Unbekannt
 core.command.args.player: Player
 core.command.args.online: Online Player
+core.command.transformers.string_to_double: {0} ist keine Nummer
+core.command.transformers.string_to_float: {0} ist keine Nummer
+core.command.transformers.string_to_int: {0} ist keine Nummer
+core.command.transformers.string_to_short: {0} ist keine Nummer
+core.command.transformers.string_to_long: {0} ist keine Nummer
+core.command.transformers.string_to_enum: {0} ist keine Option. Mögliche optionen {1}

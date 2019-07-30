@@ -13,6 +13,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 
+@Getter
 public class CommandGroup {
 
     public static class Head extends CommandGroup {
@@ -44,13 +45,23 @@ public class CommandGroup {
         this.name = name;
     }
 
-    @Getter private final String name;
+    private final String name;
 
     @Getter @Setter private CommandGroup parent;
 
-    @Getter private CommandContext command;
+    @Setter private CommandContext command;
 
-    @Getter private HashMap<String, CommandGroup> childs = new HashMap<>();
+    private HashMap<String, CommandGroup> childs = new HashMap<>();
+
+    public int parentSize() {
+        int count = 0;
+        CommandGroup group = parent;
+        while (!(group instanceof Head)) {
+            count++;
+            group = group.parent;
+        }
+        return count;
+    }
 
     public CommandGroup group(String name) {
         CommandGroup parent = this;
@@ -78,20 +89,20 @@ public class CommandGroup {
     public String commandAliasString(char separator) {
         StringBuilder str = new StringBuilder();
         CommandGroup node = this;
-        while (node != null) {
-            boolean first = true;
-            for (String alias : node.getCommand().data().getAliases()) {
-                if (first) {
-                    first = false;
-                } else {
+        while (!(node instanceof Head)) {
+            if (node.getCommand() != null) {
+                for (String alias : node.getCommand().data().getAliases()) {
+                    str.insert(0, alias);
                     str.insert(0, '/');
                 }
-                str.insert(0, alias);
             }
-            str.insert(0, node.name).insert(0, separator);
+            str.insert(0, node.name);
+            if (!node.parent.name.isEmpty()) {
+                str.insert(0, separator);
+            }
             node = node.parent;
         }
-        return str.deleteCharAt(0).toString();
+        return str.toString();
     }
 
     public ArrayList<CommandGroup> realChilds() {
@@ -105,12 +116,14 @@ public class CommandGroup {
     }
 
     public void register(CommandContext command, boolean createListener) {
-        this.command = command;
-        for (String aliases : command.data().getAliases()) {
-            getParent().childs.put(aliases, this);
-        }
         SpigotApplicationType application = getApplication();
-        command.data().buildUsage(this);
+        if (command != null) {
+            this.command = command;
+            for (String aliases : command.data().getAliases()) {
+                getParent().childs.put(aliases, this);
+            }
+            command.data().buildUsage();
+        }
 
         if (createListener) {
             try {
@@ -132,12 +145,15 @@ public class CommandGroup {
 
         PluginCommand cmd = c.newInstance(name, application.getPlugin());
 
-        List<String> aliases = Collections.singletonList(getName());
-        aliases.addAll(command.getData().getAliases());
+        List<String> aliases = new ArrayList<>(Collections.singletonList(getName()));
+
+        if (command != null) {
+            aliases.addAll(command.getData().getAliases());
+        }
 
         cmd.setAliases(aliases);
-        cmd.setUsage(command.getData().getSimpleUsage());
-        cmd.setDescription(command.getData().getDescription());
+        cmd.setUsage(command == null ? "" : command.getData().getSimpleUsage());
+        cmd.setDescription(command == null ? "" : command.getData().getDescription());
         cmd.setExecutor(application.getData(SpigotApplicationType.COMMAND_REDIRECT));
         cmd.setTabCompleter(application.getData(SpigotApplicationType.COMMAND_REDIRECT));
         return cmd;

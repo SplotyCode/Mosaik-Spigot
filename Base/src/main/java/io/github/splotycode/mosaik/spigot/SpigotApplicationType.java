@@ -1,7 +1,5 @@
 package io.github.splotycode.mosaik.spigot;
 
-import io.github.splotycode.mosaik.runtime.LinkBase;
-import io.github.splotycode.mosaik.runtime.Links;
 import io.github.splotycode.mosaik.runtime.application.ApplicationType;
 import io.github.splotycode.mosaik.runtime.startup.BootContext;
 import io.github.splotycode.mosaik.spigot.command.CommandGroup;
@@ -14,10 +12,15 @@ import io.github.splotycode.mosaik.util.datafactory.DataKey;
 import io.github.splotycode.mosaik.util.i18n.I18N;
 import io.github.splotycode.mosaik.util.io.FileUtil;
 import io.github.splotycode.mosaik.util.io.IOUtil;
+import io.github.splotycode.mosaik.util.reflection.classregister.ClassRegister;
+import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.RegisteredListener;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public interface SpigotApplicationType extends ApplicationType {
 
@@ -30,6 +33,8 @@ public interface SpigotApplicationType extends ApplicationType {
 
     DataKey<I18N> I18N = new DataKey<>("spigot.i18n");
     DataKey<YamlFile> CONFIG = new DataKey<>("spigot.config");
+
+    DataKey<ClassRegister<Listener>> LISTENER_REGISTRY = new DataKey<>("spigot.listener_registry");
 
     GuiManager GUI_MANAGER = new GuiManager();
 
@@ -47,6 +52,26 @@ public interface SpigotApplicationType extends ApplicationType {
         putData(COMMAND_HEAD, new CommandGroup.Head("", this));
         putData(COMMAND_REDIRECT, new CommandRedirect(this));
         putData(COMMAND_REGISTRATION, new CommandRegistration(this));
+        putData(LISTENER_REGISTRY, new ClassRegister<Listener>() {
+            @Override
+            public void register(Listener listener) {
+                Bukkit.getPluginManager().registerEvents(listener, getPlugin());
+            }
+
+            @Override
+            public void unRegister(Listener listener) {
+                HandlerList.unregisterAll(listener);
+            }
+
+            @Override
+            public Collection<Listener> getAll() {
+                ArrayList<Listener> listeners = new ArrayList<>();
+                for (RegisteredListener listener : HandlerList.getRegisteredListeners(getPlugin())) {
+                    listeners.add(listener.getListener());
+                }
+                return listeners;
+            }
+        });
 
         resourceToFile("message.txt");
         useLanguageFile("message.txt");
@@ -54,6 +79,23 @@ public interface SpigotApplicationType extends ApplicationType {
         putData(SpigotApplicationType.PLUGIN, SpigotPlugin.getInstance(getName()));
 
         getLocalShutdownManager().addShutdownTask(() -> HandlerList.unregisterAll(getPlugin()));
+    }
+
+    default void printCommandMap() {
+        printCommandMap(getCommandHead());
+    }
+
+    default void printCommandMap(CommandGroup group) {
+        if (group.getCommand() != null) {
+            getLogger().info("/" + group.getCommand().data().getSimpleUsage());
+        }
+        for (CommandGroup child : group.realChilds()) {
+            printCommandMap(child);
+        }
+    }
+
+    default ClassRegister<Listener> getListenerRegistry() {
+        return getData(LISTENER_REGISTRY);
     }
 
     default void resourceToFile(String name) {
@@ -64,7 +106,7 @@ public interface SpigotApplicationType extends ApplicationType {
     }
 
     default File getFile(String name) {
-        return new File(LinkBase.getInstance().getLink(Links.PATH_MANAGER).getMainDirectory(), name);
+        return new File(getPlugin().getDataFolder(), name);
     }
 
     default void loadResourceConfig() {
@@ -89,8 +131,7 @@ public interface SpigotApplicationType extends ApplicationType {
     }
 
     default void useLanguageFile(String name) {
-        File file = new File(LinkBase.getInstance().getLink(Links.PATH_MANAGER).getMainDirectory(), name);
-        putData(I18N, new I18N().setLocale(new SpigotLocale(file)));
+        putData(I18N, new I18N().setLocale(new SpigotLocale(getFile(name))));
     }
 
     default String spigotName() {

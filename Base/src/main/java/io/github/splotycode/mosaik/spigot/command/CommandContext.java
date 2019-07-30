@@ -6,9 +6,11 @@ import io.github.splotycode.mosaik.spigot.command.annotation.parameter.ArgParame
 import io.github.splotycode.mosaik.spigot.command.annotation.parameter.MessageParameterResolver;
 import io.github.splotycode.mosaik.spigot.command.annotation.parameter.SenderParameterResolver;
 import io.github.splotycode.mosaik.util.ValueTransformer;
+import io.github.splotycode.mosaik.util.datafactory.DataFactory;
 import io.github.splotycode.mosaik.util.reflection.annotation.SingleAnnotationContext;
 import io.github.splotycode.mosaik.util.reflection.annotation.method.AnnotationHandler;
 import io.github.splotycode.mosaik.util.reflection.annotation.parameter.ParameterResolver;
+import io.github.splotycode.mosaik.valuetransformer.CommonData;
 import io.github.splotycode.mosaik.valuetransformer.TransformerManager;
 
 import java.lang.annotation.Annotation;
@@ -26,7 +28,15 @@ public class CommandContext extends SingleAnnotationContext<CommandContext, Comm
 
     @Override
     public Object rawTransform(String input, Class<?> clazz, Collection<ValueTransformer> transformers) {
-        return TransformerManager.getInstance().transform(input, clazz, transformers);
+        DataFactory info = new DataFactory();
+        info.putData(CommonData.TRANSLATION_PREFIX, "core.command.transformers.");
+        info.putData(CommonData.I18N, data().getGroup().getApplication().getI18N());
+        return TransformerManager.getInstance().transformWithAdditional(info, input, clazz, transformers);
+    }
+
+    @Override
+    protected Collection<ValueTransformer> additionalTransformers() {
+        return super.additionalTransformers();
     }
 
     @Override

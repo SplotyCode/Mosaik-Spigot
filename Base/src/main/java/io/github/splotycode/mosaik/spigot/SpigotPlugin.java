@@ -4,6 +4,7 @@ import io.github.splotycode.mosaik.runtime.LinkBase;
 import io.github.splotycode.mosaik.runtime.application.Application;
 import io.github.splotycode.mosaik.runtime.startup.StartUpConfiguration;
 import io.github.splotycode.mosaik.runtime.startup.StartUpInvoke;
+import io.github.splotycode.mosaik.spigot.command.def.MosaikCommand;
 import io.github.splotycode.mosaik.spigot.exception.PluginLoadException;
 import io.github.splotycode.mosaik.spigot.gui.GuiListener;
 import io.github.splotycode.mosaik.spigot.link.SpigotLinks;
@@ -35,7 +36,9 @@ public class SpigotPlugin extends JavaPlugin {
                 .skipInvokedCheck()
                 .withBootLoggerFactory(JavaUtilLoggerFactory.class)
                 .withRuntimeLoggerFactory(JavaUtilLoggerFactory.class));
+        boolean first = false;
         if (firstPlugin) {
+            first = true;
             firstPlugin = false;
             firstPluginLoad();
         }
@@ -46,6 +49,9 @@ public class SpigotPlugin extends JavaPlugin {
 
         SpigotApplicationType application = (SpigotApplicationType) rawApplication;
         application.getDataFactory().putData(SpigotApplicationType.PLUGIN, this);
+        if (first) {
+            application.getRegistraction().register(MosaikCommand.class);
+        }
     }
 
     private void firstPluginLoad() {

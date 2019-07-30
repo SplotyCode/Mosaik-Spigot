@@ -19,7 +19,7 @@ public class ArgParameterResolver extends AnnotatedParameterResolver<Arg, Object
             return context.parameterValue(parameter, dataFactory.getData(CommandRedirect.ARGS)[arg.value()]);
         } catch (IndexOutOfBoundsException ex) {
             if (arg.required()) {
-                dataFactory.getData(CommandRedirect.MESSAGE_CONTEXT).throwUsage("core.command.nopara", arg.value());
+                dataFactory.getData(CommandRedirect.MESSAGE_CONTEXT).throwUsage("core.command.nopara", arg.value() + 1);
             }
             return null;
         }

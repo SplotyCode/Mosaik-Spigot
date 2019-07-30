@@ -52,8 +52,8 @@ public class YamlProcessor extends AbstractProcessor {
                     writer.append("version: ").append(String.valueOf(annotation.version())).append("\n");
                     writer.append("author: ").append(annotation.author()).append("\n");
                     writer.append("load: startup\n");
-                    writer.append("depend: [").append(StringUtil.join(annotation.dependencies(), obj -> " + obj + ", ", ")).append("]\n");
-                    writer.append("softdepend: [").append(StringUtil.join(annotation.softDependencies(), obj -> " + obj + ", ", ")).append("]\n");
+                    writer.append("depend: [").append(StringUtil.join(annotation.dependencies(), ", ")).append("]\n");
+                    writer.append("softdepend: [").append(StringUtil.join(annotation.softDependencies(), ", ")).append("]\n");
                 }
             } catch (IOException ex) {
                 throw new RuntimeException("Failed to create plugin.yml", ex);

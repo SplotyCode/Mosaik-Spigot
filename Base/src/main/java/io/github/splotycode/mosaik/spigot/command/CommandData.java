@@ -7,6 +7,7 @@ import io.github.splotycode.mosaik.util.reflection.annotation.data.DefaultMethod
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.lang.annotation.Annotation;
@@ -23,6 +24,7 @@ public class CommandData extends DefaultMethodData {
     private String simpleUsage;
     @Setter private String permission;
     private HashMap<Integer, Parameter> fields = new HashMap<>();
+    @Setter private CommandGroup group;
 
     @Override
     public void buildData(Annotation[] annotations) {
@@ -35,12 +37,12 @@ public class CommandData extends DefaultMethodData {
         }
     }
 
-    public void buildUsage(CommandGroup group) {
+    public void buildUsage() {
         I18N i18N = group.getApplication().getI18N();
         StringBuilder builder = new StringBuilder(group.commandAliasString(' '));
 
-        int max = fields.keySet().stream().max(Integer::compareTo).orElse(0);
-        for (int i = 0; i < max; i++) {
+        int max = fields.keySet().stream().max(Integer::compareTo).orElse(-1);
+        for (int i = 0; i < max + 1; i++) {
             builder.append(" <");
             Parameter parameter = fields.get(i);
             if (parameter == null) {
@@ -70,5 +72,9 @@ public class CommandData extends DefaultMethodData {
             builder.append('>');
         }
         simpleUsage = builder.toString();
+    }
+
+    public boolean hasPermission(CommandSender sender) {
+        return StringUtil.isEmpty(permission) || sender.hasPermission(permission);
     }
 }
