@@ -5,7 +5,6 @@ import io.github.splotycode.mosaik.spigot.command.CommandData;
 import io.github.splotycode.mosaik.util.StringUtil;
 import io.github.splotycode.mosaik.util.reflection.annotation.method.AnnotationHandler;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 
 public class DescriptionHandler implements AnnotationHandler<CommandContext, Description, CommandData> {
@@ -17,7 +16,9 @@ public class DescriptionHandler implements AnnotationHandler<CommandContext, Des
 
     @Override
     public void init(CommandContext context, Description description, CommandData data) throws Exception {
-        if (!StringUtil.isEmpty(description.description())) {
+        if (StringUtil.isEmpty(description.description())) {
+            data.setDescription(data.getGroup().getApplication().getI18N().getOrDefault("descriptions." + data.getGroup().commandString('.'), null));
+        } else {
             data.setDescription(description.description());
         }
         data.getAliases().addAll(Arrays.asList(description.aliases()));

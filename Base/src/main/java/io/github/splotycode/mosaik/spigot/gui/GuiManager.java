@@ -1,16 +1,19 @@
 package io.github.splotycode.mosaik.spigot.gui;
 
+import io.github.splotycode.mosaik.spigot.SpigotApplicationType;
+import io.github.splotycode.mosaik.spigot.exception.GuiLoadException;
 import io.github.splotycode.mosaik.util.StringUtil;
-import org.bukkit.ChatColor;
-import org.bukkit.Sound;
+import lombok.Getter;
 import org.bukkit.entity.Player;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+@Getter
 public class GuiManager {
+
+    @Getter private static HashMap<Class<? extends Gui>, Gui> initialised = new HashMap<>();
 
     private HashMap<UUID, InventoryData> openInventorys = new HashMap<>();
     private HashMap<UUID, List<InventoryData>> inventoryHistory = new HashMap<>();
@@ -19,16 +22,36 @@ public class GuiManager {
         return openInventorys.get(uuid);
     }
 
-    public void openInventory(Player player, Gui gui) {
-        InventoryData inventory = new InventoryData(player, gui);
-        openInventory(inventory);
+    protected Gui initialise(Class<? extends Gui> gui) {
+        return initialised.computeIfAbsent(gui, clazz -> {
+            try {
+                return clazz.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new GuiLoadException("Failed to construct gui", e);
+            }
+        });
+    }
+
+    public void closeNormally(InventoryData data) {
+        Player player = data.getPlayer();
+        player.closeInventory();
+        openInventorys.remove(player.getUniqueId());
+        data.getGui().onClose(player, data);
+    }
+
+    public void openGui(Class<? extends Gui> clazz, SpigotApplicationType application, Player player) {
+        Gui gui = initialise(clazz);
+        InventoryData data = new InventoryData(player, gui, application);
+        gui.onPreOpen(player, data);
+        openInventory(data);
+        gui.onPostOpen(player, data.getInventory());
     }
 
     public void openInventory(InventoryData inventory) {
         Player player = inventory.getPlayer();
         String permission = inventory.getGui().getPermission();
         if (!StringUtil.isEmpty(permission) && !player.hasPermission(permission)) {
-            player.sendMessage(ChatColor.RED + "Du darfst dieses Inventar nicht öfffnen");
+            inventory.getApplication().getMessageContext().message(player, "core.gui.access");
             return;
         }
         if (inventory.getSound() != null) {
@@ -38,13 +61,8 @@ public class GuiManager {
     }
 
     public void endSession(InventoryData session) {
-        UUID uuid = session.getPlayer().getUniqueId();
-        openInventorys.remove(uuid);
-        if (inventoryHistory.containsKey(uuid)) {
-            inventoryHistory.get(uuid).add(session);
-        } else {
-            inventoryHistory.put(uuid, Collections.singletonList(session));
-        }
+        closeNormally(session);
+        inventoryHistory.remove(session.getPlayer().getUniqueId());
     }
 
     public InventoryData getLastInventory(Player player) {
@@ -61,11 +79,4 @@ public class GuiManager {
         return list.remove(list.size() - 1);
     }
 
-    public HashMap<UUID, InventoryData> getOpenInventorys() {
-        return openInventorys;
-    }
-
-    public HashMap<UUID, List<InventoryData>> getInventoryHistory() {
-        return inventoryHistory;
-    }
 }

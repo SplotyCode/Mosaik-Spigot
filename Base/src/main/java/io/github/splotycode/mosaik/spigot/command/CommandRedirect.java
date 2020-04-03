@@ -44,12 +44,11 @@ public class CommandRedirect implements CommandExecutor, TabCompleter {
             messageContext = new SpigotMessageContext(application.getI18N(), sender);
         } else {
             messageContext.reuse(sender);
+            messageContext.setAllLinePrefix(true);
         }
         messageContext.setUsage(usage);
         messageContext.setPrefix(application.getPrefix());
-        messageContext.setAllLinePrefix(true);
-        messageContext.addReplacement("%line%", "\n");
-        messageContext.setTranlationPrefix("commands." + group.commandString('.'));
+        messageContext.setTranslationPrefix("commands." + group.commandString('.'));
     }
 
     private void printHelp(CommandGroup group) {

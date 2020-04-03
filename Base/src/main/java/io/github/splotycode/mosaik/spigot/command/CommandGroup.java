@@ -159,6 +159,15 @@ public class CommandGroup {
         return cmd;
     }
 
+    public String identifier(char separator) {
+        String appName = getApplication().getName().toLowerCase();
+        String path = commandString(separator);
+        if (!path.startsWith(appName)) {
+            path = appName + separator + path;
+        }
+        return path;
+    }
+
     @Override
     public String toString() {
         return "CommandGroup{" +

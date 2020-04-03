@@ -15,11 +15,16 @@ import java.util.function.Function;
 @Getter
 public class SpigotMessageContext extends MessageContext {
 
+    {
+        addReplacement("%line%", "\n");
+        setAllLinePrefix(true);
+    }
+
     @Setter
     private boolean reuse = true;
     private CommandSender sender;
     @Setter private String usage;
-    @Setter private String tranlationPrefix;
+    @Setter private String translationPrefix;
 
     public SpigotMessageContext(I18N translator, CommandSender sender) {
         super(translator, "Not set", false);
@@ -70,8 +75,8 @@ public class SpigotMessageContext extends MessageContext {
 
     @Override
     public String translate(String key, Object... objects) {
-        if (key.startsWith(".")) {
-            key = tranlationPrefix + key;
+        if (key.startsWith(".") && translationPrefix != null) {
+            key = translationPrefix + key;
         }
         return super.translate(key, objects);
     }

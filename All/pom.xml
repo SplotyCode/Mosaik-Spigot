@@ -94,6 +94,13 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>io.github.splotycode.mosaik.spigot</groupId>
+            <artifactId>NMS-Base</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.4</version>

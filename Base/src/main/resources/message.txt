@@ -31,3 +31,10 @@ core.command.transformers.string_to_int: {0} ist keine Nummer
 core.command.transformers.string_to_short: {0} ist keine Nummer
 core.command.transformers.string_to_long: {0} ist keine Nummer
 core.command.transformers.string_to_enum: {0} ist keine Option. Mögliche optionen {1}
+core.gui.access: Du darfst dieses Inventar nicht öfffnen
+core.gui.next: §6Nägste Seite
+core.gui.prev: §6Letzte Seite
+core.gui.close: §6Zurück
+core.gui.back: §6Exit
+core.gui.exitadvice: §6Use shift to force close
+core.gui.exitinfo: §6Zurück zu '{0}'

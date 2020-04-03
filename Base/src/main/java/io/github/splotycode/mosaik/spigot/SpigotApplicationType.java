@@ -5,22 +5,24 @@ import io.github.splotycode.mosaik.runtime.startup.BootContext;
 import io.github.splotycode.mosaik.spigot.command.CommandGroup;
 import io.github.splotycode.mosaik.spigot.command.CommandRedirect;
 import io.github.splotycode.mosaik.spigot.command.CommandRegistration;
+import io.github.splotycode.mosaik.spigot.gui.Gui;
 import io.github.splotycode.mosaik.spigot.gui.GuiManager;
+import io.github.splotycode.mosaik.spigot.listener.ListenerClassRegister;
 import io.github.splotycode.mosaik.spigot.locale.SpigotLocale;
+import io.github.splotycode.mosaik.spigot.locale.SpigotMessageContext;
 import io.github.splotycode.mosaik.spigot.storage.YamlFile;
 import io.github.splotycode.mosaik.util.datafactory.DataKey;
 import io.github.splotycode.mosaik.util.i18n.I18N;
+import io.github.splotycode.mosaik.util.i18n.MessageContext;
 import io.github.splotycode.mosaik.util.io.FileUtil;
 import io.github.splotycode.mosaik.util.io.IOUtil;
 import io.github.splotycode.mosaik.util.reflection.classregister.ClassRegister;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.RegisteredListener;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 
 public interface SpigotApplicationType extends ApplicationType {
 
@@ -32,6 +34,7 @@ public interface SpigotApplicationType extends ApplicationType {
     DataKey<CommandRegistration> COMMAND_REGISTRATION = new DataKey<>("spigot.command_reg");
 
     DataKey<I18N> I18N = new DataKey<>("spigot.i18n");
+    DataKey<SpigotMessageContext> MESSAGE_CONTEXT = new DataKey<>("spigot.message_context");
     DataKey<YamlFile> CONFIG = new DataKey<>("spigot.config");
 
     DataKey<ClassRegister<Listener>> LISTENER_REGISTRY = new DataKey<>("spigot.listener_registry");
@@ -52,26 +55,7 @@ public interface SpigotApplicationType extends ApplicationType {
         putData(COMMAND_HEAD, new CommandGroup.Head("", this));
         putData(COMMAND_REDIRECT, new CommandRedirect(this));
         putData(COMMAND_REGISTRATION, new CommandRegistration(this));
-        putData(LISTENER_REGISTRY, new ClassRegister<Listener>() {
-            @Override
-            public void register(Listener listener) {
-                Bukkit.getPluginManager().registerEvents(listener, getPlugin());
-            }
-
-            @Override
-            public void unRegister(Listener listener) {
-                HandlerList.unregisterAll(listener);
-            }
-
-            @Override
-            public Collection<Listener> getAll() {
-                ArrayList<Listener> listeners = new ArrayList<>();
-                for (RegisteredListener listener : HandlerList.getRegisteredListeners(getPlugin())) {
-                    listeners.add(listener.getListener());
-                }
-                return listeners;
-            }
-        });
+        putData(LISTENER_REGISTRY, new ListenerClassRegister(this));
 
         resourceToFile("message.txt");
         useLanguageFile("message.txt");
@@ -92,6 +76,26 @@ public interface SpigotApplicationType extends ApplicationType {
         for (CommandGroup child : group.realChilds()) {
             printCommandMap(child);
         }
+    }
+
+    default SpigotMessageContext constructMessageContext() {
+        SpigotMessageContext ctx = new SpigotMessageContext(getI18N(), null);
+        ctx.setPrefix(getPrefix());
+        putData(MESSAGE_CONTEXT, ctx);
+        return ctx;
+    }
+
+    default void openGui(Class<? extends Gui> clazz, Player player) {
+        GUI_MANAGER.openGui(clazz, this, player);
+    }
+
+    default SpigotMessageContext getMessageContext() {
+        if (!Bukkit.isPrimaryThread()) throw new IllegalStateException("The Main MessageContext is not thread save");
+        SpigotMessageContext ctx = getData(MESSAGE_CONTEXT);
+        if (ctx == null) {
+            ctx = constructMessageContext();
+        }
+        return ctx;
     }
 
     default ClassRegister<Listener> getListenerRegistry() {
@@ -132,6 +136,7 @@ public interface SpigotApplicationType extends ApplicationType {
 
     default void useLanguageFile(String name) {
         putData(I18N, new I18N().setLocale(new SpigotLocale(getFile(name))));
+        constructMessageContext();
     }
 
     default String spigotName() {

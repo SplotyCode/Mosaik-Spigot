@@ -2,10 +2,11 @@ package io.github.splotycode.mosaik.spigot.gui;
 
 import io.github.splotycode.mosaik.spigot.SpigotApplicationType;
 import io.github.splotycode.mosaik.spigot.util.ColorCode;
-import io.github.splotycode.mosaik.spigot.util.ItemStackUtil;
+import io.github.splotycode.mosaik.spigot.util.ItemBuilder;
 import io.github.splotycode.mosaik.util.AlmostBoolean;
 import io.github.splotycode.mosaik.util.datafactory.DataFactory;
 import io.github.splotycode.mosaik.util.datafactory.DataKey;
+import io.github.splotycode.mosaik.util.i18n.I18N;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
@@ -26,8 +27,9 @@ public class InventoryData {
     public static final DataKey<Integer> PAGE = new DataKey<>("lib.page");
     public static final DataKey<Integer> HOT_BAR_SLOT = new DataKey<>("lib.hotbar.slot");
 
-    private Player player;
-    private Gui gui;
+    @Getter private final Player player;
+    @Getter private final Gui gui;
+    @Getter private final SpigotApplicationType application;
     private List<ItemStack> content;
     private List<ItemStack> hotBar;
     private String displayName = null;
@@ -38,9 +40,10 @@ public class InventoryData {
     private Closeable closeable;
     private AlmostBoolean page = AlmostBoolean.MAYBE;
 
-    public InventoryData(Player player, Gui gui) {
+    public InventoryData(Player player, Gui gui, SpigotApplicationType application) {
         this.player = player;
         this.gui = gui;
+        this.application = application;
     }
 
     public boolean itemClick(InventoryClickEvent event) {
@@ -53,13 +56,16 @@ public class InventoryData {
         }
         if (closeable.isCloseButton() && event.getRawSlot() == event.getClickedInventory().getSize() - 1) {
             GuiManager manager = SpigotApplicationType.GUI_MANAGER;
+            boolean force = event.isShiftClick();
 
-            player.closeInventory();
-            InventoryData inv = manager.removeLastInventory(player);
-            manager.endSession(this);
-
-            if (inv != null) {
-                manager.openInventory(inv);
+            manager.closeNormally(this);
+            if (force) {
+                manager.endSession(this);
+            } else {
+                InventoryData inv = manager.removeLastInventory(player);
+                if (inv != null) {
+                    manager.openInventory(inv);
+                }
             }
             return true;
         }
@@ -75,27 +81,36 @@ public class InventoryData {
         return gui.onItemClick(player, this, factory, event);
     }
 
+    private void reset() {
+        inventory = null;
+        reCalcSize();
+    }
+
     public ItemStack[] getContent() {
-        if(!factory.containsData(PAGE)) factory.putData(PAGE, 0);
+        if (!factory.containsData(PAGE)) factory.putData(PAGE, 0);
         int currentPage = factory.getData(PAGE);
         boolean page = isPage();
         int size = getSize();
 
-        int startCount = currentPage*45;
+        int startCount = currentPage * 45;
 
         ItemStack[] inv = new ItemStack[size];
 
-        int i = 0;
-        for (int count = startCount;count < startCount+size && count != content.size();count++) {
-            inv[i] = content.get(count);
-            i++;
+        for (int count = startCount; count < startCount + size && count != content.size(); count++) {
+            inv[count - startCount] = content.get(count);
         }
 
+        I18N translator = application.getI18N();
 
         if (page) {
-            if (currentPage != 0) inv[46] = ItemStackUtil.createbasic("§6Letzte Seite", currentPage-1, Material.ARROW);
-            if (content.size() > startCount + size) inv[size - 2] = ItemStackUtil.createbasic("§6Nägste Seite", currentPage+1, Material.ARROW);
-            int place = 47;
+            if (currentPage != 0) {
+                inv[46] = new ItemBuilder(translator, "core.gui.prev", Material.ARROW).setSize(currentPage - 1);
+            }
+            if (content.size() > startCount + size) {
+                inv[size - 2] = new ItemBuilder(translator, "core.gui.next", Material.ARROW).setSize(currentPage + 1);
+            }
+
+            int place = 9 * 5 + 2;
             for (ItemStack item : hotBar) {
                 inv[place] = item;
                 place++;
@@ -103,11 +118,17 @@ public class InventoryData {
             }
         }
 
-        Closeable closeable = getCloseable();
-
-        if (closeable.isCloseButton()) {
+        if (getCloseable().isCloseButton()) {
             InventoryData last = SpigotApplicationType.GUI_MANAGER.getLastInventory(player);
-            inv[size - 1] = ItemStackUtil.createColoredWoolLohre(last == null ? "Exit" : "Zurück", 1, ColorCode.RED.getId(), last == null ? "Schliessen" : "Zurück zu '" + last.getDisplayName() + "'");
+            boolean hasLast = last != null;
+            ItemBuilder item = new ItemBuilder(translator, "core.gui." + (hasLast ? "back" : "close"))
+                    .wool(ColorCode.RED);
+            if (hasLast) {
+                item.setTranslationName("core.gui.back")
+                        .translateLohre("core.gui.exitadvice")
+                        .translateLohre("core.gui.exitinfo", last.getDisplayName());
+            }
+            inv[size - 1] = item;
         }
 
         return inv;
@@ -115,6 +136,7 @@ public class InventoryData {
 
     public void setPage(boolean page) {
         this.page = AlmostBoolean.fromBoolean(page);
+        reset();
     }
 
     public InventoryData setCloseable(Closeable closeable) {
@@ -131,19 +153,19 @@ public class InventoryData {
 
     public int getSize() {
         if (size == -1) {
-            recaclcSize();
+            reset();
         }
         return size;
     }
 
     public String getDisplayName() {
         if (displayName == null) {
-            displayName = "Unamed";
+            displayName = gui.getClass().getSimpleName();
         }
         return displayName;
     }
 
-    public void recaclcSize() {
+    public void reCalcSize() {
         size = isPage() ? 45 : (int) Math.ceil((content.size()+1D) / 9D)*9;
         if (size < 9) size = 9;
     }
@@ -157,7 +179,7 @@ public class InventoryData {
 
     public Inventory getInventory() {
         if (inventory == null) {
-            recaclcSize();
+            reCalcSize();
             inventory = Bukkit.createInventory(null, getSize(), getDisplayName());
             inventory.setContents(getContent());
         }
@@ -167,49 +189,48 @@ public class InventoryData {
     public InventoryData setItem(int index, ItemStack itemStack) {
         if (content == null) content = new ArrayList<>();
         content.set(index, itemStack);
+        reset();
         return this;
     }
 
     public InventoryData addItems(ItemStack... items) {
         if (content == null) {
             content = Arrays.asList(items);
+            reset();
             return this;
         }
         Collections.addAll(content, items);
+        reset();
         return this;
     }
 
     public InventoryData setHotBar(int index, ItemStack itemStack) {
         if (hotBar == null) hotBar = new ArrayList<>();
         hotBar.set(index, itemStack);
+        reset();
         return this;
     }
 
     public InventoryData addHotBar(ItemStack... items) {
         if (hotBar == null) {
             hotBar = Arrays.asList(items);
+            reset();
             return this;
         }
         Collections.addAll(hotBar, items);
+        reset();
         return this;
     }
 
     public InventoryData setList(List<ItemStack> content) {
         this.content = content;
+        reset();
         return this;
     }
 
     public DataFactory getFactory() {
         if (factory == null) factory = new DataFactory();
         return factory;
-    }
-
-    public Player getPlayer() {
-        return player;
-    }
-
-    public Gui getGui() {
-        return gui;
     }
 
 }

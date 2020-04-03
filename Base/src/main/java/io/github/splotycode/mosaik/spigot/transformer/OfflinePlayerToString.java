@@ -8,7 +8,7 @@ public class OfflinePlayerToString extends ValueTransformer<OfflinePlayer, Strin
 
     @Override
     public String transform(OfflinePlayer offlinePlayer, DataFactory info) throws Exception {
-        return offlinePlayer.getName();
+        return offlinePlayer.getUniqueId().toString();
     }
 
 }

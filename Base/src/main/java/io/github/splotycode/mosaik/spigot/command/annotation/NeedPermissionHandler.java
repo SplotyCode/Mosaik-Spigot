@@ -15,12 +15,7 @@ public class NeedPermissionHandler implements AnnotationHandler<CommandContext, 
     @Override
     public void init(CommandContext context, NeedPermission permission, CommandData data) throws Exception {
         if (StringUtil.isEmpty(permission.value())) {
-            String appName = data.getGroup().getApplication().getName().toLowerCase();
-            String path =  data.getGroup().commandString('.');
-            if (!path.startsWith(appName)) {
-                path = appName + path;
-            }
-            data.setPermission(path);
+            data.setPermission(data.getGroup().identifier('.'));
         } else {
             data.setPermission(permission.value());
         }

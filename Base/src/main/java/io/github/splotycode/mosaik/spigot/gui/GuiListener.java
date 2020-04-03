@@ -46,9 +46,8 @@ public class GuiListener implements Listener {
 
         InventoryData inventory = manager.getOpenInventorys().get(uuid);
 
-        if (inventory != null) {
-            boolean result = inventory.itemClick(event);
-            if (result) event.setCancelled(true);
+        if (inventory != null && inventory.itemClick(event)) {
+            event.setCancelled(true);
         }
     }
 

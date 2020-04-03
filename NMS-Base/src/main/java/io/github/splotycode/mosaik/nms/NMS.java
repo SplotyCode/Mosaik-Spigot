@@ -1,11 +1,14 @@
 package io.github.splotycode.mosaik.nms;
 
+import io.github.splotycode.mosaik.box.Box;
 import io.github.splotycode.mosaik.util.ExceptionUtil;
 import io.github.splotycode.mosaik.util.logger.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -36,11 +39,22 @@ public interface NMS {
 
     int getPing(Player player);
 
-    AABBBox getBox(Player player);
+    Box getBox(Player player);
 
-    AABBBox getBox(Block block);
+    Box getBox(Block block);
 
-    default AABBBox getBox(Location location) {
+    byte[] getNBT(BlockState state);
+    void saveNBT(BlockState state, byte[] nbt);
+
+    byte[] storeInventory(Inventory inventory);
+    Inventory loadInventory(byte[] data, Inventory inventory);
+
+    default Inventory loadInventory(byte[] data) {
+        return loadInventory(data, null);
+    }
+
+
+    default Box getBox(Location location) {
         return getBox(location.getBlock());
     }
 
