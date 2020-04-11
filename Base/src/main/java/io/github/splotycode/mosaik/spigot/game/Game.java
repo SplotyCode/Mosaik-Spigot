@@ -3,9 +3,11 @@ package io.github.splotycode.mosaik.spigot.game;
 import io.github.splotycode.mosaik.spigot.game.listener.GameStateListener;
 import io.github.splotycode.mosaik.spigot.game.listener.PlayerListener;
 import io.github.splotycode.mosaik.spigot.listener.ApplicationListener;
+import io.github.splotycode.mosaik.spigot.map.Map;
 import io.github.splotycode.mosaik.util.listener.Listener;
 import io.github.splotycode.mosaik.util.listener.MultipleListenerHandler;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ public abstract class Game extends ApplicationListener {
     @Getter protected MultipleListenerHandler<Listener> handler = new MultipleListenerHandler<>();
 
     protected int minPlayers, maxPlayers;
+    @Setter @Getter protected Map currentMap;
 
     private ArrayList<Player> playingPlayers = new ArrayList<>();
 
