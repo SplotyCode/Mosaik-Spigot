@@ -26,12 +26,20 @@ public class ListenerClassRegister implements ClassRegister<Listener> {
         if (listener instanceof ApplicationListener) {
             ((ApplicationListener) listener).setApplication(application);
         }
-        Bukkit.getPluginManager().registerEvents(listener, plugin);
+        if (listener instanceof ToggleableListener) {
+            ((ToggleableListener) listener).registerListener();
+        } else {
+            Bukkit.getPluginManager().registerEvents(listener, plugin);
+        }
     }
 
     @Override
     public void unRegister(Listener listener) {
-        HandlerList.unregisterAll(listener);
+        if (listener instanceof ToggleableListener) {
+            ((ToggleableListener) listener).unregisterListener();
+        } else {
+            HandlerList.unregisterAll(listener);
+        }
     }
 
     @Override

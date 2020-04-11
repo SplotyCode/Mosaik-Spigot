@@ -4,15 +4,15 @@ import io.github.splotycode.mosaik.spigot.SpigotApplicationType;
 import io.github.splotycode.mosaik.spigot.locale.SpigotMessageContext;
 import lombok.Getter;
 import lombok.Setter;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerEvent;
 
 @Getter
 @Setter
-public class ApplicationListener implements Listener {
+public class ApplicationListener implements ToggleableListener {
 
-    private SpigotApplicationType application;
+    protected SpigotApplicationType application;
 
     public SpigotMessageContext message(PlayerEvent event) {
         return message(event.getPlayer());
@@ -24,4 +24,8 @@ public class ApplicationListener implements Listener {
         return ctx;
     }
 
+    @Override
+    public void registerListener() {
+        Bukkit.getPluginManager().registerEvents(this, application.getPlugin());
+    }
 }
