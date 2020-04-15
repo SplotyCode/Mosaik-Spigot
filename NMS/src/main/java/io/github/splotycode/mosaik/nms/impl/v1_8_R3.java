@@ -3,11 +3,15 @@ package io.github.splotycode.mosaik.nms.impl;
 import io.github.splotycode.mosaik.box.Box;
 import io.github.splotycode.mosaik.box.RawBox;
 import io.github.splotycode.mosaik.nms.NMS;
+import io.github.splotycode.mosaik.nms.impl.nms18R3.BlockImpl;
+import io.github.splotycode.mosaik.nms.impl.nms18R3.BlockRegistryImpl;
+import io.github.splotycode.mosaik.nms.impl.nms18R3.BoxUtil;
+import io.github.splotycode.mosaik.nms.impl.nms18R3.NBTUtil;
 import io.github.splotycode.mosaik.util.ExceptionUtil;
+import lombok.Getter;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.block.Block;
+import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.block.CraftBlockState;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
@@ -20,73 +24,44 @@ import org.bukkit.inventory.ItemStack;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class v1_8_R3 implements NMS {
 
-   private EntityPlayer getHandle(Player player) {
+    @Getter private BlockRegistryImpl blockRegistry = new BlockRegistryImpl();
+
+    private EntityPlayer getHandle(Player player) {
        return ((CraftPlayer) player).getHandle();
    }
 
     @Override
     public Box getBox(Player player) {
-        return convert(player.getWorld(), getHandle(player).getBoundingBox());
+        return BoxUtil.convert(player.getWorld(), getHandle(player).getBoundingBox());
     }
 
-    private Box convert(World world, AxisAlignedBB boundingBox) {
-        if (boundingBox == null) return null;
-        return new RawBox(world, boundingBox.a, boundingBox.b, boundingBox.c, boundingBox.d, boundingBox.e, boundingBox.f);
+    @Override
+    public List<Box> getIntersections(Box box) {
+        World world = ((CraftWorld) box.world()).getHandle();
+        List<AxisAlignedBB> intersections = world.a(BoxUtil.convert(box));
+        return BoxUtil.convert(box.world(), intersections);
+    }
+
+    @Override
+    public List<Box> getBlockIntersection(int combinedID, Location location, Box box) {
+        IBlockData data = Block.getByCombinedId(combinedID);
+        World world = BlockImpl.getWorld0(location);
+        BlockPosition position = BlockImpl.getPos0(location);
+
+        ArrayList<AxisAlignedBB> boxes = new ArrayList<>();
+        BlockImpl.getBoxes0(world, data, position, BoxUtil.convert(box), boxes);
+        return BoxUtil.convert(location.getWorld(), boxes);
     }
 
     @Override
     public int getPing(Player player) {
         return getHandle(player).ping;
-    }
-
-    @Override
-    public Box getBox(Block block) {
-        BlockPosition loc = new BlockPosition(block.getX(), block.getY(), block.getZ());
-        WorldServer world = ((CraftWorld) block.getWorld()).getHandle();
-
-        IBlockData data = world.getType(loc);
-        net.minecraft.server.v1_8_R3.Block nmsBlock = CraftMagicNumbers.getBlock(block);
-
-        if (data == null || nmsBlock == null) return null;
-        return convert(block.getWorld(), nmsBlock.a(world, loc, data));
-   }
-
-   private byte[] fromNBT(NBTTagCompound nbt) {
-       ByteArrayOutputStream bos = new ByteArrayOutputStream();
-       try {
-           NBTCompressedStreamTools.a(nbt, bos);
-       } catch (IOException ex) {
-           ExceptionUtil.throwRuntime(ex);
-       }
-       return bos.toByteArray();
-   }
-
-   private NBTTagCompound toNBT(byte[] data) {
-       try {
-           return NBTCompressedStreamTools.a(new ByteArrayInputStream(data));
-       } catch (IOException ex) {
-           ExceptionUtil.throwRuntime(ex);
-           return null;
-       }
-   }
-
-    @Override
-    public byte[] getNBT(org.bukkit.block.BlockState state) {
-        CraftBlockState craftState = (CraftBlockState) state;
-        NBTTagCompound nbt = new NBTTagCompound();
-        craftState.getTileEntity().b(nbt);
-        return fromNBT(nbt);
-    }
-
-    @Override
-    @SuppressWarnings("ConstantConditions")
-    public void saveNBT(org.bukkit.block.BlockState state, byte[] data) {
-        CraftBlockState craftState = (CraftBlockState) state;
-        craftState.getTileEntity().b(toNBT(data));
-        craftState.getTileEntity().update();
     }
 
     @Override
@@ -103,13 +78,13 @@ public class v1_8_R3 implements NMS {
         }
         nbt.set("inventory", list);
         nbt.setInt("size", list.size());
-        return fromNBT(nbt);
+        return NBTUtil.fromNBT(nbt);
     }
 
     @Override
     @SuppressWarnings("ConstantConditions")
     public Inventory loadInventory(byte[] data, Inventory inventory) {
-        NBTTagCompound nbt = toNBT(data);
+        NBTTagCompound nbt = NBTUtil.toNBT(data);
         NBTTagList list = nbt.getList("inventory", nbt.getInt("size"));
 
         if (inventory == null) {

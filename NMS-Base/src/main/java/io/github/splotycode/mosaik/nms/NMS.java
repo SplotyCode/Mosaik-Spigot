@@ -11,51 +11,23 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 public interface NMS {
 
-    Logger LOGGER = Logger.getInstance(NMS.class);
-    NMS current = current0();
+    BlockRegistry<?> getBlockRegistry();
 
-    static NMS current() {
-        return current;
-    }
-
-    static String version() {
-        String raw = Bukkit.getServer().getClass().getPackage().getName();
-        return raw.substring(raw.lastIndexOf('.') + 2);
-    }
-
-    static NMS current0() {
-        try {
-            return (NMS) Class.forName("io.github.splotycode.mosaik.nms.impl.v" + version()).newInstance();
-        }catch (ClassNotFoundException e){
-            LOGGER.error("You ServerVersion is not Supported this will most probably result in Errors!!!");
-        }catch (InstantiationException | IllegalAccessException e) {
-            ExceptionUtil.throwRuntime(e);
-        }
-        return null;
-    }
+    List<Box> getIntersections(Box box);
+    List<Box> getBlockIntersection(int combinedID, Location location, Box box);
 
     int getPing(Player player);
-
     Box getBox(Player player);
 
-    Box getBox(Block block);
-
-    byte[] getNBT(BlockState state);
-    void saveNBT(BlockState state, byte[] nbt);
-
     byte[] storeInventory(Inventory inventory);
-    Inventory loadInventory(byte[] data, Inventory inventory);
 
+    Inventory loadInventory(byte[] data, Inventory inventory);
     default Inventory loadInventory(byte[] data) {
         return loadInventory(data, null);
-    }
-
-
-    default Box getBox(Location location) {
-        return getBox(location.getBlock());
     }
 
 }
