@@ -2,9 +2,9 @@ package io.github.splotycode.mosaik.nms;
 
 import lombok.Getter;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 
-import java.util.Collection;
 import java.util.HashMap;
 
 public abstract class BlockRegistry<B> {
@@ -21,12 +21,17 @@ public abstract class BlockRegistry<B> {
         return blocks.get(byBlock(block));
     }
 
+    public NMSBlock getBlock(Material material) {
+        return blocks.get(byMaterial(material));
+    }
+
     public NMSBlock getBlock(Location location) {
         return blocks.get(byLocation(location));
     }
 
     protected abstract B byLocation(Location location);
     protected abstract B byBlock(Block block);
+    protected abstract B byMaterial(Material material);
 
     protected abstract Iterable<B> getAllBlocks();
     protected abstract NMSBlock newBlock(B block);
