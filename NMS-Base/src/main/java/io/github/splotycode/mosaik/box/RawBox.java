@@ -90,6 +90,11 @@ public class RawBox implements Box {
     }
 
     @Override
+    public RawBox copy() {
+        return new RawBox(world(), minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    @Override
     public void expandByPosition(Location loc) {
         expandByPosition(loc.getX(), loc.getY(), loc.getZ());
     }
@@ -201,6 +206,93 @@ public class RawBox implements Box {
     @Override
     public double getLengthSquared() {
         return Math.pow(minX - maxX, 2) + Math.pow(minY - maxY, 2) + Math.pow(minZ - maxZ, 2);
+    }
+
+    @Override
+    public void move(double x, double y, double z) {
+        minX += x;
+        maxX += x;
+
+        minY += y;
+        maxY += y;
+
+        minZ += z;
+        maxZ += z;
+    }
+
+    @Override
+    public Box createMove(double x, double y, double z) {
+        return new RawBox(world, minX + x, minY + y, minZ + z,
+                maxX + x, maxY + y, maxZ + z);
+    }
+
+    @Override
+    public void move(Location location) {
+        move(location.getX(), location.getY(), location.getZ());
+    }
+
+    @Override
+    public Box createMove(Location location) {
+        return createMove(location.getX(), location.getY(), location.getZ());
+    }
+
+    @Override
+    public void addCord(Location location) {
+        addCord(location.getX(), location.getY(), location.getZ());
+    }
+
+    @Override
+    public void addCord(double x, double y, double z) {
+        if(x < 0.0D) {
+            minX += x;
+        } else if(x > 0.0D) {
+            maxX += x;
+        }
+
+        if(y < 0.0D) {
+            minY += y;
+        } else if(y > 0.0D) {
+            maxY += y;
+        }
+
+        if(z < 0.0D) {
+            minZ += z;
+        } else if(z > 0.0D) {
+            maxZ += z;
+        }
+    }
+
+    @Override
+    public Box createAddCord(Location location) {
+        return createAddCord(location.getX(), location.getY(), location.getZ());
+    }
+
+    @Override
+    public Box createAddCord(double x, double y, double z) {
+        double minX = minX();
+        double minY = minY();
+        double minZ = minZ();
+        double maxX = maxX();
+        double maxY = maxY();
+        double maxZ = maxZ();
+        if(x < 0.0D) {
+            minX += x;
+        } else if(x > 0.0D) {
+            maxX += x;
+        }
+
+        if(y < 0.0D) {
+            minY += y;
+        } else if(y > 0.0D) {
+            maxY += y;
+        }
+
+        if(z < 0.0D) {
+            minZ += z;
+        } else if(z > 0.0D) {
+            maxZ += z;
+        }
+        return new RawBox(world(), minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     @Override

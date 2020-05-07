@@ -14,4 +14,6 @@ public interface NMSBlock {
     byte[] getNBT(Location location);
     void saveNBT(Location location, byte[] nbt);
 
+    float slipperiness();
+
 }

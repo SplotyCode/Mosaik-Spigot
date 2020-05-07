@@ -88,6 +88,11 @@ public class LocationBox implements Box {
     }
 
     @Override
+    public LocationBox copy() {
+        return new LocationBox(min.clone(), max.clone());
+    }
+
+    @Override
     public void expandByPosition(Location loc) {
         max.setX(Math.max(max.getX(), loc.getX()));
         max.setY(Math.max(max.getY(), loc.getY()));
@@ -200,6 +205,96 @@ public class LocationBox implements Box {
     @Override
     public double getLengthSquared() {
         return min.distanceSquared(max);
+    }
+
+    @Override
+    public void move(double x, double y, double z) {
+        min.add(x, y, z);
+        max.add(x, y, z);
+    }
+
+    @Override
+    public Box createMove(double x, double y, double z) {
+        return new RawBox(world(), minX() + x, minY() + y, minZ() + z,
+                maxX() + x, maxY() + y, maxZ() + z);
+    }
+
+    @Override
+    public void move(Location location) {
+        min.add(location);
+        max.add(location);
+    }
+
+    @Override
+    public Box createMove(Location location) {
+        return createMove(location.getX(), location.getY(), location.getY());
+    }
+
+    @Override
+    public void addCord(Location location) {
+        addCord(location.getX(), location.getY(), location.getZ());
+    }
+
+    @Override
+    public void addCord(double x, double y, double z) {
+        double minX = minX();
+        double minY = minY();
+        double minZ = minZ();
+        double maxX = maxX();
+        double maxY = maxY();
+        double maxZ = maxZ();
+        if(x < 0.0D) {
+            minX += x;
+        } else if(x > 0.0D) {
+            maxX += x;
+        }
+
+        if(y < 0.0D) {
+            minY += y;
+        } else if(y > 0.0D) {
+            maxY += y;
+        }
+
+        if(z < 0.0D) {
+            minZ += z;
+        } else if(z > 0.0D) {
+            maxZ += z;
+        }
+        min = new Location(world(), minX, minY, minZ);
+        max = new Location(world(), maxX, maxY, maxZ);
+    }
+
+    @Override
+    public Box createAddCord(Location location) {
+        return createAddCord(location.getX(), location.getY(), location.getZ());
+    }
+
+    @Override
+    public Box createAddCord(double x, double y, double z) {
+        double minX = minX();
+        double minY = minY();
+        double minZ = minZ();
+        double maxX = maxX();
+        double maxY = maxY();
+        double maxZ = maxZ();
+        if(x < 0.0D) {
+            minX += x;
+        } else if(x > 0.0D) {
+            maxX += x;
+        }
+
+        if(y < 0.0D) {
+            minY += y;
+        } else if(y > 0.0D) {
+            maxY += y;
+        }
+
+        if(z < 0.0D) {
+            minZ += z;
+        } else if(z > 0.0D) {
+            maxZ += z;
+        }
+        return new RawBox(world(), minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     @Override

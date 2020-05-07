@@ -6,7 +6,6 @@ import io.github.splotycode.mosaik.util.collection.ArrayUtil;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_8_R3.block.CraftBlock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +27,17 @@ public class BlockImpl implements NMSBlock {
     }
 
     public static BlockPosition getPos0(Location location) {
-        return new BlockPosition(location.getX(), location.getY(), location.getZ());
+        return new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
     public static void getBoxes0(World world, IBlockData data, BlockPosition blockPosition, AxisAlignedBB box, ArrayList<AxisAlignedBB> output) {
         data.getBlock().a(world, blockPosition, data, box, output, null);
+    }
+
+    public static List<Box> getBoxes0(org.bukkit.World bukkitWorld, World world, IBlockData data, BlockPosition blockPosition, AxisAlignedBB box) {
+        ArrayList<AxisAlignedBB> output = new ArrayList<>();
+        getBoxes0(world, data, blockPosition, box, output);
+        return BoxUtil.convert(bukkitWorld, output);
     }
 
     @Override
@@ -82,6 +87,15 @@ public class BlockImpl implements NMSBlock {
             tileEntity.a(NBTUtil.toNBT(nbt));
             tileEntity.update();
         }
+    }
+
+    @Override
+    public float slipperiness() {
+        /*
+         * In MCP it is named slipperiness craftbukkit named it frictionFactor
+         * If this field changes we can get the name from the BlockIce constructor
+         */
+        return block.frictionFactor;
     }
 
 }
