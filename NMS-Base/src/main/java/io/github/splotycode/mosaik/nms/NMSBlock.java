@@ -10,6 +10,7 @@ public interface NMSBlock {
 
     Box getBox(Block block);
     List<Box> getIntersections(Block block, Box box);
+    List<Box> getIntersections(Location location, int data, Box box);
 
     byte[] getNBT(Location location);
     void saveNBT(Location location, byte[] nbt);

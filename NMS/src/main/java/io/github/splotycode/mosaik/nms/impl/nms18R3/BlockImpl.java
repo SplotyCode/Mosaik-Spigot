@@ -61,9 +61,16 @@ public class BlockImpl implements NMSBlock {
         World world = getWorld0(location);
 
         IBlockData data = world.getType(blockPosition);
-        ArrayList<AxisAlignedBB> boxes = new ArrayList<>();
-        getBoxes0(world, data, blockPosition, nmsBox, boxes);
-        return BoxUtil.convert(location.getWorld(), boxes);
+        return getBoxes0(location.getWorld(), world, data, blockPosition, nmsBox);
+    }
+
+    @Override
+    public List<Box> getIntersections(Location location, int data, Box box) {
+        AxisAlignedBB nmsBox = BoxUtil.convert(box);
+        BlockPosition blockPosition = getPos0(location);
+        World world = getWorld0(location);
+        IBlockData stateData = block.fromLegacyData(data);
+        return getBoxes0(location.getWorld(), world, stateData, blockPosition, nmsBox);
     }
 
     @Override
